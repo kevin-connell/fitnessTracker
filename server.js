@@ -2,25 +2,25 @@ const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
 const logger = require("morgan");
-const mongojs = require("mongojs")
+const db = require("./models");
 
 const app = express();
 
 app.use(logger("dev"));
+app.use(express.urlencoded({extended:true}));
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/dbFitness", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/workout", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
 
 app.use(express.static("public"));
-
-const db = mongojs("workout", ["workouts"])
 
 // API ROUTES
 
 // GET /api/workouts
-app.get("/api/workouts", (req, res) => {
-  db.workouts.find({}, (err, data) => {
+app.get("/api/workouts", function (req, res) {
+  db.Workout.find({}, (err, data) => {
     if (err) {
       console.log(err);
     } else {
@@ -29,8 +29,9 @@ app.get("/api/workouts", (req, res) => {
   });
 });
 // POST /api/workouts
-app.post("/api/workouts", (req, res) => {
-  db.workouts.insert(req.body, (err, data) => {
+app.post("/api/workouts", function (req, res) {
+  console.log(req.body);
+  db.Workout.create(req.body, (err, data) => {
     if (err) {
       console.log(err);
     } else {
@@ -39,8 +40,9 @@ app.post("/api/workouts", (req, res) => {
   });
 });
 // PUT /api/workouts/:id
-app.put("/api/workouts/:id", (req, res) => {
-  db.workouts.update({_id: mongojs.ObjectId(req.params.id)}, {$addToSet: {exercises: req.body}}, (err, data) => {
+app.put("/api/workouts/:id", function (req, res) {
+  console.log(req.body);
+  db.Workout.findByIdAndUpdate(req.params.id, {$push: {exercises: req.body}}, {new: true, runValidators: true}, (err, data) => {
     if (err) {
       console.log(err);
     } else {
@@ -49,8 +51,8 @@ app.put("/api/workouts/:id", (req, res) => {
   });
 });
 // Get /api/workouts/range LIMIT 7
-app.get("/api/workouts/range", (req, res) => {
-  db.workouts.find({}).sort({ day:-1 }).limit( 7, (err, data) => {
+app.get("/api/workouts/range", function (req, res) {
+  db.Workout.find({}).sort({ day:-1 }).limit( 7, (err, data) => {
     if (err) {
       console.log(err);
     } else {
@@ -61,15 +63,15 @@ app.get("/api/workouts/range", (req, res) => {
 
 // HTML ROUTES 
 
-app.get("/", (req, res) => {
+app.get("/", function (req, res) {
   res.sendFile(path.join(__dirname, "public/index.html"))
 });
 
-app.get("/exercise", (req, res) => {
+app.get("/exercise", function (req, res) {
   res.sendFile(path.join(__dirname, "public/exercise.html"))
 });
 
-app.get("/stats", (req, res) => {
+app.get("/stats", function (req, res) {
   res.sendFile(path.join(__dirname, "public/stats.html"))
 });
 

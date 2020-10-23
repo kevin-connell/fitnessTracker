@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
 const logger = require("morgan");
+const mongojs = require("mongojs")
 
 const app = express();
 
@@ -9,27 +10,66 @@ app.use(logger("dev"));
 
 const PORT = process.env.PORT || 3000;
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/dbFitness", { useNewUrlParser: true , useUnifiedTopology: true, useCreateIndex: true});
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/dbFitness", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
 
 app.use(express.static("public"));
 
+const db = mongojs("workout", ["workouts"])
+
 // API ROUTES
 
+// GET /api/workouts
+app.get("/api/workouts", (req, res) => {
+  db.workouts.find({}, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(data);
+    };
+  });
+});
 // POST /api/workouts
+app.post("/api/workouts", (req, res) => {
+  db.workouts.insert(req.body, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(data);
+    };
+  });
+});
 // PUT /api/workouts/:id
+app.put("/api/workouts/:id", (req, res) => {
+  db.workouts.update({_id: mongojs.ObjectId(req.params.id)}, {$addToSet: {exercises: req.body}}, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(data);
+    };
+  });
+});
 // Get /api/workouts/range LIMIT 7
+app.get("/api/workouts/range", (req, res) => {
+  db.workouts.find({}).sort({ day:-1 }).limit( 7, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.json(data);
+    };
+  });
+});
 
 // HTML ROUTES 
 
-app.get("/", (req, res) =>{
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"))
 });
 
-app.get("/exercise", (req, res) =>{
+app.get("/exercise", (req, res) => {
   res.sendFile(path.join(__dirname, "public/exercise.html"))
 });
 
-app.get("/stats", (req, res) =>{
+app.get("/stats", (req, res) => {
   res.sendFile(path.join(__dirname, "public/stats.html"))
 });
 

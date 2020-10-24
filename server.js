@@ -7,7 +7,7 @@ const db = require("./models");
 const app = express();
 
 app.use(logger("dev"));
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -42,7 +42,7 @@ app.post("/api/workouts", function (req, res) {
 // PUT /api/workouts/:id
 app.put("/api/workouts/:id", function (req, res) {
   console.log(req.body);
-  db.Workout.findByIdAndUpdate(req.params.id, {$push: {exercises: req.body}}, {new: true, runValidators: true}, (err, data) => {
+  db.Workout.findByIdAndUpdate(req.params.id, { $push: { exercises: req.body } }, { new: true, runValidators: true }, (err, data) => {
     if (err) {
       console.log(err);
     } else {
@@ -52,21 +52,48 @@ app.put("/api/workouts/:id", function (req, res) {
 });
 // Get /api/workouts/range LIMIT 7
 app.get("/api/workouts/range", function (req, res) {
-  console.log("hello start me")
-  db.Workout
-  .find({})
-  .sort({'day': 1})
-  .limit(7)
-  .sort({'day': 1})
-  .exec(function(err, data) {
-    console.log(data);
+  db.Workout.find({}).exec(function (err, data) {
     if (err) {
       console.log(err);
       res.end()
     } else {
-      res.json(data);
+      let newArr = [];
+
+      const addDate = async () => {
+        let currentLength = newArr.length
+        let dateOffset = (24 * 60 * 60 * 1000) * currentLength;
+        let dateToSearch = new Date();
+        dateToSearch.setTime(dateToSearch.getTime() - dateOffset);
+
+        console.log("searching...");
+        console.log(dateToSearch);
+
+        newArr.unshift(data.find(item => dateToSearch.toString().substring(4, 15) == new Date(item.day).toString().substring(4, 15))? data.find(item => dateToSearch.toString().substring(4, 15) == new Date(item.day).toString().substring(4, 15)): { exercises: [{duration: 0}] })
+        if (newArr.length < 7) {
+          addDate()
+        }
+      };
+      
+      addDate()
+      
+      console.log("new arr made")
+      res.json(newArr);
     };
-  });
+  })
+  // db.Workout
+  //   .find({})
+  //   .sort({ 'day': 1 })
+  //   .limit(7)
+  //   .sort({ 'day': 1 })
+  //   .exec(function (err, data) {
+  //     console.log(data);
+  //     if (err) {
+  //       console.log(err);
+  //       res.end()
+  //     } else {
+  //       res.json(data);
+  //     };
+  //   });
 
 
   // db.Workout.find({published: true}).sort({'day': -1}).limit(7).exec()

@@ -52,13 +52,34 @@ app.put("/api/workouts/:id", function (req, res) {
 });
 // Get /api/workouts/range LIMIT 7
 app.get("/api/workouts/range", function (req, res) {
-  db.Workout.find({}).sort({ day:-1 }).limit( 7, (err, data) => {
+  console.log("hello start me")
+  db.Workout
+  .find({})
+  .sort({'day': 1})
+  .limit(7)
+  .sort({'day': 1})
+  .exec(function(err, data) {
+    console.log(data);
     if (err) {
       console.log(err);
+      res.end()
     } else {
       res.json(data);
     };
   });
+
+
+  // db.Workout.find({published: true}).sort({'day': -1}).limit(7).exec()
+  // .then{
+  //   console.log("data:");
+  //   console.log(data);
+  //   if (err) {
+  //     console.log(err);
+  //     res.end()
+  //   } else {
+  //     res.json(data);
+  //   };
+  // });
 });
 
 // HTML ROUTES 
